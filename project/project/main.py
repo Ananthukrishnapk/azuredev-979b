@@ -19,7 +19,7 @@ import os
 # Load environment variables
 load_dotenv()
 
-from routers import analyze_router
+from routers import analyze_router, test_router
 
 app = FastAPI(
     title="SEO-GEO-AEO API",
@@ -38,6 +38,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(analyze_router)
+app.include_router(test_router)  # Test mode without Playwright
 
 # Mount static files for frontend
 frontend_path = Path(__file__).parent.parent.parent / "frontend"
