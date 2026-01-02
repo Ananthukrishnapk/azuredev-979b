@@ -486,6 +486,11 @@
         <h1>🚀 SEO-GEO-AEO Analyzer</h1>
         <p>AI-Powered Website Optimization Analysis</p>
         <span class="badge">✨ Powered by Microsoft AI Foundry</span>
+        <div id="testModeBadge" style="margin-top: 10px; display: none;">
+          <span class="badge" style="background: rgba(255, 185, 0, 0.3);">
+            🧪 Test Mode - Using Mock Data
+          </span>
+        </div>
       </header>
 
       <div class="analysis-card">
@@ -549,13 +554,14 @@
     </div>
 
     <script>
-      // Check if test mode is enabled (for environments without Playwright)
-      const useTestMode = localStorage.getItem('useTestMode') === 'true' || window.location.search.includes('test=true');
+      // Enable test mode by default (Playwright not available in container)
+      const useTestMode = localStorage.getItem('useTestMode') !== 'false'; // Default: true
       const API_BASE_URL = window.location.origin + "/api";
       const ANALYZE_ENDPOINT = useTestMode ? "/test-analyze" : "/analyze";
       
       if (useTestMode) {
-        console.log('🧪 Test Mode Enabled - Using mock data');
+        console.log('🧪 Test Mode Enabled - Using mock data (Playwright not available in container)');
+        document.getElementById('testModeBadge').style.display = 'block';
       }
 
       // Enter key support
