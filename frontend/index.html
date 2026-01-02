@@ -549,7 +549,14 @@
     </div>
 
     <script>
+      // Check if test mode is enabled (for environments without Playwright)
+      const useTestMode = localStorage.getItem('useTestMode') === 'true' || window.location.search.includes('test=true');
       const API_BASE_URL = window.location.origin + "/api";
+      const ANALYZE_ENDPOINT = useTestMode ? "/test-analyze" : "/analyze";
+      
+      if (useTestMode) {
+        console.log('🧪 Test Mode Enabled - Using mock data');
+      }
 
       // Enter key support
       document
@@ -576,7 +583,7 @@
         disableButton();
 
         try {
-          const response = await fetch(`${API_BASE_URL}/analyze`, {
+          const response = await fetch(`${API_BASE_URL}${ANALYZE_ENDPOINT}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
