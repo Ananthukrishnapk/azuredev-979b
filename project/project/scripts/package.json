@@ -1,0 +1,24 @@
+{
+  "name": "unlh",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc src/unlighthouse_engine.ts --skipLibCheck --esModuleInterop --module NodeNext --target ES2022 --outDir dist"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "Unlighthouse engine for SEO-GEO-AEO API",
+  "dependencies": {
+    "unlighthouse": "^0.17.4",
+    "why-is-node-running": "^3.2.2",
+    "yaml": "^2.8.2",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

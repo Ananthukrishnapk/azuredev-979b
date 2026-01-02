@@ -1,0 +1,4 @@
+paths:
+  temp_dir: temp
+  unlighthouse_reports: unlighthouse
+  unlighthouse_artifacts: artifacts

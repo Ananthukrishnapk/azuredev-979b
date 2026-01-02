@@ -1,0 +1,23 @@
+# Python requirements for SEO-GEO-AEO API
+# Subset of Site360 requirements - only what's needed for SEO/GEO/AEO
+
+# Core
+fastapi==0.122.0
+uvicorn==0.38.0
+pydantic==2.12.5
+pydantic_core==2.41.5
+
+# HTTP client
+httpx==0.28.1
+
+# Playwright (for browser automation)
+playwright==1.57.0
+
+# Utilities
+xxhash==3.6.0
+python-dotenv==1.2.1
+PyYAML==6.0.3
+
+# Typing and validation
+typing_extensions==4.15.0
+annotated-types==0.7.0
