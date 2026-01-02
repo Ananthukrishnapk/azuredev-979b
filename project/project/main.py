@@ -11,7 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
+import os
 
 # Load environment variables
 load_dotenv()
@@ -36,9 +39,20 @@ app.add_middleware(
 # Include routers
 app.include_router(analyze_router)
 
+# Mount static files for frontend
+frontend_path = Path(__file__).parent.parent.parent / "frontend"
+if frontend_path.exists():
+    app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
+
 
 @app.get("/")
 async def root():
+    """Serve the frontend HTML"""
+    frontend_file = Path(__file__).parent.parent.parent / "frontend" / "index.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    
+    # Fallback to JSON response if frontend not found
     return {
         "service": "SEO-GEO-AEO API",
         "version": "1.0.0",
