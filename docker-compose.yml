@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seo-geo-aeo-api
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      # Add your environment variables here
+      - GSC_CLIENT_ID=${GSC_CLIENT_ID}
+      - GSC_CLIENT_SECRET=${GSC_CLIENT_SECRET}
+      - GSC_REFRESH_TOKEN=${GSC_REFRESH_TOKEN}
+      - GSC_SITE_URL=${GSC_SITE_URL}
+      - SAFE_BROWSING_API_KEY=${SAFE_BROWSING_API_KEY}
+    env_file:
+      - .env
+    volumes:
+      - ./project/temp:/app/project/temp
+      - ./project/unlighthouse:/app/project/unlighthouse
+      - ./project/artifacts:/app/project/artifacts
+    networks:
+      - api-network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import httpx; httpx.get('http://localhost:8001/api/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  temp-data:
+  unlighthouse-data:
+  artifacts-data:

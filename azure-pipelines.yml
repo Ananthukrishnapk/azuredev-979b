@@ -1,0 +1,176 @@
+# Azure DevOps Pipeline for SEO-GEO-AEO API with Microsoft AI Foundry
+# This pipeline builds, tests, and deploys the Python FastAPI application
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - README.md
+      - docs/*
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  pythonVersion: "3.10"
+  nodeVersion: "18.x"
+  azureSubscription: "YOUR_AZURE_SUBSCRIPTION_NAME"
+  appServiceName: "seo-geo-aeo-api"
+  resourceGroupName: "rg-seo-geo-aeo"
+  containerRegistry: "YOUR_CONTAINER_REGISTRY.azurecr.io"
+  imageName: "seo-geo-aeo-api"
+  tag: "$(Build.BuildId)"
+
+stages:
+  - stage: Build
+    displayName: "Build and Test"
+    jobs:
+      - job: BuildJob
+        displayName: "Build Python Application"
+        steps:
+          # Checkout code
+          - checkout: self
+            displayName: "Checkout Repository"
+
+          # Set up Python
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "$(pythonVersion)"
+              addToPath: true
+            displayName: "Use Python $(pythonVersion)"
+
+          # Set up Node.js for Unlighthouse
+          - task: NodeTool@0
+            inputs:
+              versionSpec: "$(nodeVersion)"
+            displayName: "Install Node.js $(nodeVersion)"
+
+          # Install Python dependencies
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r project/requirements.txt
+              pip install -r requirements.txt
+            displayName: "Install Python Dependencies"
+
+          # Install Playwright browsers
+          - script: |
+              playwright install chromium
+              playwright install-deps chromium
+            displayName: "Install Playwright Browsers"
+
+          # Install Node.js dependencies for Unlighthouse
+          - script: |
+              cd project/scripts
+              npm install
+            displayName: "Install Node.js Dependencies"
+
+          # Run tests (if you have tests)
+          - script: |
+              # Add your test commands here
+              # pytest tests/
+              echo "No tests configured yet"
+            displayName: "Run Tests"
+            continueOnError: true
+
+          # Create deployment artifact
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: "$(System.DefaultWorkingDirectory)"
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+              replaceExistingArchive: true
+            displayName: "Archive Application Files"
+
+          # Publish artifact
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "$(Build.ArtifactStagingDirectory)"
+              ArtifactName: "drop"
+              publishLocation: "Container"
+            displayName: "Publish Build Artifact"
+
+  - stage: BuildDocker
+    displayName: "Build Docker Image"
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DockerBuildJob
+        displayName: "Build and Push Docker Image"
+        steps:
+          - checkout: self
+
+          # Docker Login
+          - task: Docker@2
+            inputs:
+              containerRegistry: "YOUR_DOCKER_SERVICE_CONNECTION"
+              command: "login"
+            displayName: "Docker Login"
+
+          # Build Docker Image
+          - task: Docker@2
+            inputs:
+              containerRegistry: "YOUR_DOCKER_SERVICE_CONNECTION"
+              repository: "$(imageName)"
+              command: "build"
+              Dockerfile: "Dockerfile"
+              tags: |
+                $(tag)
+                latest
+            displayName: "Build Docker Image"
+
+          # Push Docker Image
+          - task: Docker@2
+            inputs:
+              containerRegistry: "YOUR_DOCKER_SERVICE_CONNECTION"
+              repository: "$(imageName)"
+              command: "push"
+              tags: |
+                $(tag)
+                latest
+            displayName: "Push Docker Image"
+
+  - stage: Deploy
+    displayName: "Deploy to Azure"
+    dependsOn: BuildDocker
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToAzure
+        displayName: "Deploy to Azure App Service"
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Deploy to Azure Web App for Containers
+                - task: AzureWebAppContainer@1
+                  inputs:
+                    azureSubscription: "$(azureSubscription)"
+                    appName: "$(appServiceName)"
+                    resourceGroupName: "$(resourceGroupName)"
+                    containers: "$(containerRegistry)/$(imageName):$(tag)"
+                  displayName: "Deploy to Azure App Service"
+
+                # Configure App Settings
+                - task: AzureAppServiceSettings@1
+                  inputs:
+                    azureSubscription: "$(azureSubscription)"
+                    appName: "$(appServiceName)"
+                    resourceGroupName: "$(resourceGroupName)"
+                    appSettings: |
+                      [
+                        {
+                          "name": "WEBSITES_PORT",
+                          "value": "8001",
+                          "slotSetting": false
+                        },
+                        {
+                          "name": "WEBSITE_HTTPSCALEV2_ENABLED",
+                          "value": "1",
+                          "slotSetting": false
+                        }
+                      ]
+                  displayName: "Configure App Settings"
